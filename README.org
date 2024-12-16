@@ -9,15 +9,20 @@ https://www.haskell.org/ghcup/install/
 + GHC 
 + HLS
 ** Copy this repo
-$ git clone https://github.com/PatrickJacobo/XMonad ~/.config/xmonad
-$ cd ~/.config/xmonad
-$ stack install
+#+begin_src bash
+git clone https://github.com/PatrickJacobo/XMonad ~/.config/xmonad
+cd ~/.config/xmonad
+stack install
+#+end_src
 ** Copy the rest of my dotfiles
-$ git clone https://github.com/PatrickJacobo/dotfiles
-$ cd dotfiles
-$ stow . --simulate
+#+begin_src bash
+git clone https://github.com/PatrickJacobo/dotfiles
+cd dotfiles
+stow . --simulate
+#+end_src
  Remove the files that conflict
-$ stow .
-
+#+begin_src bash
+stow .
+#+end_src
 startx
 
