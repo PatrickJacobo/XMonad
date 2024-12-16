@@ -1,0 +1,23 @@
+#+AUTHOR: Patrick Lee
+#+Description: XMonad Config
+
+* Installation 
+** Install ghcup
+https://www.haskell.org/ghcup/install/
+*** with ghcup installed install 
++ Stack
++ GHC 
++ HLS
+** Copy this repo
+$ git clone https://github.com/PatrickJacobo/XMonad ~/.config/xmonad
+$ cd ~/.config/xmonad
+$ stack install
+** Copy the rest of my dotfiles
+$ git clone https://github.com/PatrickJacobo/dotfiles
+$ cd dotfiles
+$ stow . --simulate
+ Remove the files that conflict
+$ stow .
+
+startx
+
