@@ -1,18 +1,134 @@
+-- Imports
 import XMonad
 
+-- Prompts
+import XMonad.Prompt
+
+-- Hooks
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
+import XMonad.Hooks.WindowSwallowing
+import XMonad.Hooks.EwmhDesktops
 
+-- Utils
 import XMonad.Util.EZConfig
 import XMonad.Util.Loggers
+import XMonad.Util.Font
 
+-- Layouts
 import XMonad.Layout.Magnifier
 import XMonad.Layout.ThreeColumns
 
-import XMonad.Hooks.EwmhDesktops
+-- Actions
+import XMonad.Actions.GridSelect
+import XMonad.Actions.WindowBringer (windowMap)
+
+-- Operations
+
+
+-- System stuff
+import System.Directory (listDirectory, doesFileExist, doesDirectoryExist)
+import System.FilePath ((</>), takeExtension)
+import Data.Maybe (catMaybes)
+import qualified Data.Text as T 
+import qualified Data.Text.IO as TIO
+import Control.Monad (filterM)
+import qualified Data.Map as M
+
+myFont :: String
+myFont = "xft:SauceCodePro Nerd Font Mono:regular:size=9:antialias=true:hinting=true"
+
+myNavigation :: TwoD a (Maybe a)
+myNavigation = makeXEventhandler $ shadowWithKeymap navKeyMap navDefaultHandler
+ where navKeyMap = M.fromList [
+          ((0,xK_Escape)        , cancel)
+         ,((0,xK_Return)        , select)
+         ,((0,xK_slash)         , substringSearch myNavigation)
+         ,((0,xK_Left)          , move (-1,0)  >> myNavigation)
+         ,((0,xK_h)             , move (-1,0)  >> myNavigation)
+         ,((0,xK_Right)         , move (1,0)   >> myNavigation)
+         ,((0,xK_l)             , move (1,0)   >> myNavigation)
+         ,((0,xK_Down)          , move (0,1)   >> myNavigation)
+         ,((0,xK_j)             , move (0,1)   >> myNavigation)
+         ,((0,xK_Up)            , move (0,-1)  >> myNavigation)
+         ,((0,xK_k)             , move (0,-1)  >> myNavigation)
+         ,((0,xK_y)             , move (-1,-1) >> myNavigation)
+         ,((0,xK_i)             , move (1,-1)  >> myNavigation)
+         ,((0,xK_n)             , move (-1,1)  >> myNavigation)
+         ,((0,xK_m)             , move (1,1)   >> myNavigation)
+         ,((0,xK_space)         , setPos (0,0) >> myNavigation)
+         ,((0,xK_Tab)           , moveNext     >> myNavigation)
+         ,((shiftMask, xK_Tab)  , movePrev     >> myNavigation)
+         ]
+       navDefaultHandler = const myNavigation
+
+
+
+myColorizer :: a -> Bool -> X (String, String)
+myColorizer _ isSelected = 
+    if isSelected
+       then pure ("#b4befe", "#11111b")
+       else pure ("#181825", "#cdd6f4")
+ 
+
+
+myGsConfig :: GSConfig String
+myGsConfig = def
+           { gs_cellheight   = 40
+           , gs_cellwidth    = 180
+           , gs_cellpadding  = 6
+           , gs_originFractX = 0.5
+           , gs_originFractY = 0.5
+           , gs_navigate     = myNavigation
+           , gs_font         = myFont
+           , gs_colorizer    = myColorizer
+           }
+
+myGsConfigWindow :: GSConfig Window
+myGsConfigWindow = def
+    { gs_cellheight   = 40
+    , gs_cellwidth    = 180
+    , gs_cellpadding  = 6
+    , gs_originFractX = 0.5
+    , gs_originFractY = 0.5
+    , gs_navigate     = myNavigation
+    , gs_font         = myFont
+    , gs_colorizer    = myColorizer-- Use a default colorizer for Windows
+    }
+
+spawnSelected' :: [(String, String)] -> X ()
+spawnSelected' lst = gridselect myGsConfig lst >>= flip whenJust spawn
+
+goToSelected' :: X ()
+goToSelected' = goToSelected myGsConfigWindow
+
+runSelectedAction' :: GSConfig (X ()) -> [(String, X ())] -> X ()
+runSelectedAction' conf actions = do
+    selectedActionM <- gridselect conf actions
+    case selectedActionM of
+        Just selectedAction -> selectedAction
+        Nothing -> return ()
+gsPrograms = 
+    [("Firefox", "firefox")
+    ,("ST", "st")
+    ,("BTOP", "st -e btop")
+    ,("NVIM", "st -e nvim")
+    ,("QuteBrowser", "qutebrowser")
+    ,("Audio Manage", "pavucontrol")
+    ,("Thunar", "thunar")
+    ,("Wallpaper", "nitrogen")
+    ,("Meld", "meld")
+    ,("steam", "steam")
+    ,("Xournal", "xournalpp")
+    ,("VLC", "vlc")
+    ,("qTorrent", "qbittorrent")
+    ,("Chess", "pychess")
+    ,("Emacs", "emacsclient -c ")
+    ]
+
 
 
 main :: IO ()
@@ -26,6 +142,7 @@ myConfig = def
     { modMask    = mod4Mask      -- Rebind Mod to the Super key
     , layoutHook = myLayout      -- Use custom layouts
     , manageHook = myManageHook  -- Match on certain windows
+    , handleEventHook    =  swallowEventHook ( className =? "st-256color") (return True) 
     , terminal = "st"
     }
   `additionalKeysP`
@@ -36,6 +153,13 @@ myConfig = def
     , ("M-S-c", spawn "xmonad --recompile; xmonad --restart")
     , ("M-a", spawn "xbacklight -inc 5")
     , ("M-S-a", spawn "xbacklight -dec 5")
+    , ("M-o", spawnSelected'  gsPrograms)
+    , ("M-y", unGrab >> spawn "maim -s |xclip -selection clipboard -t image/png")
+    , ("M-<Tab>", goToSelected' )
+    , ("<XF86AudioMute>",  spawn "pactl set-sink-volume 0 0%")
+    , ("<XF86AudioLowerVolume>",  spawn "pactl set-sink-volume 0 -5%")
+    , ("<XF86AudioRaiseVolume>",  spawn "pactl set-sink-volume 0 +5%")
+
     ]    
 
 myManageHook :: ManageHook
@@ -43,6 +167,7 @@ myManageHook = composeAll
     [ className =? "Gimp" --> doFloat
     , isDialog            --> doFloat
     ]
+
 
 myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
   where
