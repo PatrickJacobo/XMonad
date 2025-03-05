@@ -1,45 +1,48 @@
 -- Imports
-import XMonad
+import           XMonad
 
 -- Prompts
-import XMonad.Prompt
+import           XMonad.Prompt
 
 -- Hooks
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.ManageHelpers
-import XMonad.Hooks.StatusBar
-import XMonad.Hooks.StatusBar.PP
-import XMonad.Hooks.WindowSwallowing
-import XMonad.Hooks.EwmhDesktops
+import           XMonad.Hooks.DynamicLog
+import           XMonad.Hooks.ManageDocks
+import           XMonad.Hooks.ManageHelpers
+import           XMonad.Hooks.StatusBar
+import           XMonad.Hooks.StatusBar.PP
+import           XMonad.Hooks.WindowSwallowing
+import           XMonad.Hooks.EwmhDesktops
 
 -- Utils
-import XMonad.Util.EZConfig
-import XMonad.Util.Loggers
-import XMonad.Util.Font
+import           XMonad.Util.EZConfig
+import           XMonad.Util.Loggers
+import           XMonad.Util.Font
 
 -- Layouts
-import XMonad.Layout.Magnifier
-import XMonad.Layout.ThreeColumns
+import           XMonad.Layout.Magnifier
+import           XMonad.Layout.ThreeColumns
 
 -- Actions
-import XMonad.Actions.GridSelect
-import XMonad.Actions.WindowBringer (windowMap)
+import           XMonad.Actions.GridSelect
+import           XMonad.Actions.Search
+import           XMonad.Actions.WindowBringer (windowMap)
+import           XMonad.Actions.EasyMotion
 
 -- Operations
 
 
 -- System stuff
-import System.Directory (listDirectory, doesFileExist, doesDirectoryExist)
-import System.FilePath ((</>), takeExtension)
-import Data.Maybe (catMaybes)
-import qualified Data.Text as T 
+import           System.Directory (listDirectory, doesFileExist, doesDirectoryExist)
+import           System.FilePath ((</>), takeExtension)
+import           Data.Maybe (catMaybes)
+import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Control.Monad (filterM)
+import           Control.Monad (filterM)
 import qualified Data.Map as M
+import XMonad.StackSet qualified as W
 
 myFont :: String
-myFont = "xft:SauceCodePro Nerd Font Mono:regular:size=9:antialias=true:hinting=true"
+myFont = "xft:Iosevka:regular:size=12:antialias=true:hinting=true"
 
 myNavigation :: TwoD a (Maybe a)
 myNavigation = makeXEventhandler $ shadowWithKeymap navKeyMap navDefaultHandler
@@ -72,7 +75,6 @@ myColorizer _ isSelected =
     if isSelected
        then pure ("#b4befe", "#11111b")
        else pure ("#181825", "#cdd6f4")
- 
 
 
 myGsConfig :: GSConfig String
@@ -99,6 +101,25 @@ myGsConfigWindow = def
     , gs_colorizer    = myColorizer-- Use a default colorizer for Windows
     }
 
+myXPConfig :: XPConfig
+myXPConfig =
+  def
+        {   font = myFont,
+        bgColor = "#11111b",
+        fgColor = "#b4befe",
+        historySize = 5,
+        position = Top        }
+
+myEasyMotionConfig :: EasyMotionConfig
+myEasyMotionConfig =
+  def
+    {
+        txtCol="#b4befe"
+        ,bgCol="#11111b"
+        ,emFont="xft:Iosevka:regular:size=52:antialias=true:hinting=true"
+        ,cancelKey = xK_f
+    }
+
 spawnSelected' :: [(String, String)] -> X ()
 spawnSelected' lst = gridselect myGsConfig lst >>= flip whenJust spawn
 
@@ -111,8 +132,9 @@ runSelectedAction' conf actions = do
     case selectedActionM of
         Just selectedAction -> selectedAction
         Nothing -> return ()
-gsPrograms = 
-    [("Firefox", "firefox")
+
+gsPrograms =
+    [("Librewolf", "librewolf")
     ,("ST", "st")
     ,("BTOP", "st -e btop")
     ,("NVIM", "st -e nvim")
@@ -128,7 +150,6 @@ gsPrograms =
     ,("Chess", "pychess")
     ,("Emacs", "emacsclient -c ")
     ]
-
 
 
 main :: IO ()
@@ -155,10 +176,13 @@ myConfig = def
     , ("M-S-a", spawn "xbacklight -dec 5")
     , ("M-o", spawnSelected'  gsPrograms)
     , ("M-y", unGrab >> spawn "maim -s |xclip -selection clipboard -t image/png")
+    , ("M-v", unGrab >> spawn "clipmenu")
     , ("M-<Tab>", goToSelected' )
     , ("<XF86AudioMute>",  spawn "pactl set-sink-volume 0 0%")
     , ("<XF86AudioLowerVolume>",  spawn "pactl set-sink-volume 0 -5%")
     , ("<XF86AudioRaiseVolume>",  spawn "pactl set-sink-volume 0 +5%")
+    , ("M-s", promptSearch myXPConfig wikipedia)
+    , ("M-f", selectWindow myEasyMotionConfig >>= (`whenJust` windows . W.focusWindow))
 
     ]    
 
