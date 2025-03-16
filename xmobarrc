@@ -7,7 +7,7 @@ Config { overrideRedirect = False
                         [ "-L", "3"
                         , "-H", "50"
                         , "--high"  , "red"
-                        , "--normal", "green"
+                        , "--normal", "#9fe044"
                         ] 10
                     , Run Memory ["--template", "Mem: <usedratio>%"] 10
                     , Run Date "%a %Y-%m-%d <fc=#8be9fd>%H:%M</fc>" "date" 10
@@ -17,7 +17,7 @@ Config { overrideRedirect = False
                              , "--High"     , "80"        -- units: %
                              , "--low"      , "red"
                              , "--normal"   , "yellow"
-                             , "--high"     , "green"
+                             , "--high"     , "#9fe044"
 
                              , "--" -- battery specific options
                                        -- discharging status
@@ -25,7 +25,7 @@ Config { overrideRedirect = False
                                        -- AC "on" status
                                        , "-O"	, "<fc=yellow>Charging</fc>"
                                        -- charged status
-                                       , "-i"	, "<fc=green>Charged</fc>"
+                                       , "-i"	, "<fc=#9fe044>Charged</fc>"
                              ] 50
     ]
        , sepChar  = "%"

@@ -1,5 +1,11 @@
 #+AUTHOR: Patrick Lee
 #+Description: XMonad Config
+* Index :toc:
+- [[Installation][Installation]]
+  - [[Install ghcup][Install ghcup]]
+  - [[Copy this repo][Copy this repo]]
+  - [[Copy the rest of my dotfiles][Copy the rest of my dotfiles]]
+- [[Keybinds][Keybinds]]
 
 * Installation 
 ** Install ghcup
@@ -23,6 +29,42 @@ stow . --simulate
  Remove the files that conflict
 #+begin_src bash
 stow .
-#+end_src
 startx
-
+#+end_src
+* Keybinds
+|-------------------+------------------------------------|
+| Key               | Action                             |
+|-------------------+------------------------------------|
+| M-u               | Prefix                             |
+| prefix M-s        | Busqueda                           |
+| M-f               | Easymotion                         |
+| M-S-c             | Restart Reload                     |
+| M-S-q             | Quit X                             |
+| M-q               | Kill                               |
+| M-w M-e M-r       | move focus to screen 1,2,3         |
+| M-S-w M-S-e M-S-r | move window to screen 1,2,3        |
+| M-{1-9}           | Move focus to workspace 1-9        |
+| M-S-{1-9}         | Move window to workspace 1-9       |
+| M-S-Ret           | Rofi --drun                        |
+| M-Ret             | st                                 |
+| M-l               | Increment master ratio             |
+| M-h               | Decrease master ratio              |
+| M-j               | Next window                        |
+| M-k               | Previous window                    |
+| M-g               | Emacs anywhere                     |
+| F6                | Increase brightness                |
+| F7                | Decrease brightness                |
+| M-o               | (to be deprecated) Select programs |
+| M-Tab             | Gridselect of open windows         |
+| M-y               | screenshot                         |
+| M-v               | clipboard                          |
+| M-C-x             | reload screens                     |
+| F86AudioMute      | Mute                               |
+| F86AudioIncrease  | Increase volume by 5%              |
+| F86AudioDecrease  | Decrease volume by 5%              |
+| M-,               | Increase master stack size         |
+| M-.               | Decrease master stack size         |
+| M-p               | dmenu (?????)                      |
+| M-m               | focus master                       |
+| M-b               | Bar space                          |
+|-------------------+------------------------------------|

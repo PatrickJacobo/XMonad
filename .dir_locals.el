@@ -19,7 +19,6 @@
 ;;
 ;;; Code:
 
-((nil . ((lsp-mode . nil))))
 
 (provide '.dir_locals)
 ;;; .dir_locals.el ends here
