@@ -9,6 +9,7 @@
 import Control.Monad (filterM)
 import Data.Map (Map, fromList)
 import Data.Maybe (catMaybes)
+import Data.Ratio ((%))
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import System.Directory (doesDirectoryExist, doesFileExist, listDirectory)
@@ -29,8 +30,15 @@ import XMonad.Hooks.StatusBar.PP
 -- import XMonad.Hooks.WallpaperSetter
 import XMonad.Hooks.WindowSwallowing
 import XMonad.Layout
+import XMonad.Layout.LayoutModifier (ModifiedLayout)
+import XMonad.Layout.LimitWindows (limitWindows)
 import XMonad.Layout.Magnifier
+import XMonad.Layout.NoBorders (Ambiguity (Combine, OnlyFloat, Screen), With (Union), lessBorders)
+import XMonad.Layout.Reflect (reflectHoriz)
+import XMonad.Layout.Renamed (Rename (Replace), renamed)
+import XMonad.Layout.ResizableTile (MirrorResize (MirrorExpand, MirrorShrink), ResizableTall (ResizableTall))
 import XMonad.Layout.ThreeColumns
+import XMonad.Layout.ThreeColumns (ThreeCol (ThreeColMid))
 import XMonad.ManageHook
 import XMonad.Prompt
 import XMonad.Prompt.Man
@@ -41,6 +49,7 @@ import XMonad.Util.Font
 import XMonad.Util.Loggers
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.SpawnOnce
+
 myFont :: String
 myFont = "xft:Iosevka:regular:size=12:antialias=true:hinting=true"
 
@@ -207,7 +216,7 @@ myConfig =
   def
     { modMask = mod4Mask, -- Rebind Mod to the Super key
       startupHook = myStartupHook,
-      layoutHook = myLayout, -- Use custom layouts
+      layoutHook = lessBorders (Combine Union Screen OnlyFloat) myLayout, -- Use custom layouts
       manageHook = myManageHook, -- Match on certain windows
       normalBorderColor = "#1a1b26",
       workspaces = myWorkspaces,
@@ -225,7 +234,10 @@ myConfig =
                         ("<F6>", spawn "xbacklight -inc 5"),
                         ("<F7>", spawn "xbacklight -dec 5"),
                         ("M-o", spawnSelected' gsPrograms),
-                        ("M-y", unGrab >> spawn "maim -s |xclip -selection clipboard -t image/png"),
+                        ("M-C-k", sendMessage MirrorExpand),
+                        ("M-C-j", sendMessage MirrorShrink),
+                        ("M-o", spawnSelected' gsPrograms),
+                        ("M-y", unGrab >> spawn "scrot --select - |xclip -selection clipboard -t image/png"),
                         ("M-v", unGrab >> spawn "clipmenu"),
                         ("M-<Tab>", goToSelected'),
                         ("<XF86AudioMute>", spawn "pactl set-sink-volume 0 0%"),
@@ -249,13 +261,26 @@ myManageHook =
 browser :: Browser
 browser = "librewolf"
 
-myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
+myLayout =
+  tall
+    ||| Full
+    ||| Mirror tall
+    ||| oshiWatching
   where
-    threeCol = magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
-    tiled = Tall nmaster delta ratio
-    nmaster = 1 -- Default number of windows in the master pane
-    ratio = 1 / 2 -- Default proportion of screen occupied by master pane
-    delta = 3 / 100 -- Percent of screen to increment by when resizing panes
+    tall :: ModifiedLayout Rename ResizableTall a
+    tall = setName "Tall" $ rTall 1 (3 % 100) (1 % 2)
+
+    oshiWatching =
+      setName "OshiWatching"
+        . limitWindows 3
+        . magnify 1.3 (NoMaster 3) True
+        $ rTall 1 (3 % 100) (13 % 25)
+
+    setName :: String -> l a -> ModifiedLayout Rename l a
+    setName n = renamed [Replace n]
+
+    rTall :: Int -> Rational -> Rational -> ResizableTall l
+    rTall m r c = ResizableTall m r c []
 
 myXmobarPP :: PP
 myXmobarPP =
