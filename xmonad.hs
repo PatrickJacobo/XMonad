@@ -23,9 +23,12 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.Rescreen (RescreenConfig (afterRescreenHook), rescreenHook)
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
+-- import XMonad.Hooks.WallpaperSetter
 import XMonad.Hooks.WindowSwallowing
+import XMonad.Layout
 import XMonad.Layout.Magnifier
 import XMonad.Layout.ThreeColumns
 import XMonad.ManageHook
@@ -37,7 +40,7 @@ import XMonad.Util.EZConfig
 import XMonad.Util.Font
 import XMonad.Util.Loggers
 import XMonad.Util.NamedScratchpad
-
+import XMonad.Util.SpawnOnce
 myFont :: String
 myFont = "xft:Iosevka:regular:size=12:antialias=true:hinting=true"
 
@@ -125,6 +128,11 @@ myEasyMotionConfig =
       cancelKey = xK_f
     }
 
+myStartupHook = do
+  spawnOnce "emacs --daemon"
+  setDefaultCursor xC_coffee_mug
+  spawnOnce "timeout 3 ~/.config/xmonad/wallpaper-changer"
+
 myBrowserSelector :: PrefixArgument -> X ()
 myBrowserSelector = \case
   Raw 1 -> promptSearch myXPConfig duckduckgo
@@ -161,7 +169,6 @@ gsPrograms =
     ("CuteBrowser", "qutebrowser"),
     ("Audio Manage", "pavucontrol"),
     ("Thunar", "thunar"),
-    ("Wallpaper", "nitrogen"),
     ("Meld", "meld"),
     ("Steam", "steam"),
     ("Xournal", "xournalpp"),
@@ -176,16 +183,34 @@ main =
     . ewmhFullscreen
     . ewmh
     . usePrefixArgument "M-u"
+    . rescreenHook def {afterRescreenHook = onMonitorChange}
     . withEasySB (statusBarProp "xmobar ~/.config/xmonad/xmobarrc" (pure myXmobarPP)) defToggleStrutsKey
     $ myConfig
+  where
+    onMonitorChange :: X ()
+    onMonitorChange = do
+      spawn " wallpaper-changer" -- make wallpaper pretty
+
+myWorkspaces =
+  [ "1:Main",
+    "2:Code",
+    "3:Schizo",
+    "4:logs",
+    "5:",
+    "6:",
+    "7:",
+    "8:",
+    "9:VM"
+  ]
 
 myConfig =
   def
     { modMask = mod4Mask, -- Rebind Mod to the Super key
-      startupHook = setDefaultCursor xC_coffee_mug,
+      startupHook = myStartupHook,
       layoutHook = myLayout, -- Use custom layouts
       manageHook = myManageHook, -- Match on certain windows
       normalBorderColor = "#1a1b26",
+      workspaces = myWorkspaces,
       focusedBorderColor = "#c7a9ff",
       borderWidth = 0,
       handleEventHook = swallowEventHook (className =? "st-256color") (return True),
@@ -239,7 +264,7 @@ myXmobarPP =
       ppTitleSanitize = xmobarStrip,
       ppCurrent = wrap " " "" . xmobarBorder "Top" "#f1fa8c" 2,
       ppHidden = white . wrap " " "",
-      ppHiddenNoWindows = lowWhite . wrap " " "",
+      -- ppHiddenNoWindows = xmobarbgColor . pad "" "",
       ppUrgent = red . wrap (yellow "!") (yellow "!"),
       ppOrder = \[ws, l, _, wins] -> [ws, l, wins],
       ppExtras = [logTitles formatFocused formatUnfocused]
@@ -251,7 +276,7 @@ myXmobarPP =
     -- \| Windows should have *some* title, which should not not exceed a
     -- sane length.
     ppWindow :: String -> String
-    ppWindow = xmobarRaw . (\w -> if null w then "untitled" else w) . shorten 30
+    ppWindow = xmobarRaw . (\w -> if null w then "untitled" else w) . shorten 30 . xmobarStrip
 
     blue, lowWhite, magenta, red, white, yellow, green :: String -> String
     magenta = xmobarColor "#c7a9ff" ""
@@ -261,3 +286,4 @@ myXmobarPP =
     red = xmobarColor "#ff899d" ""
     lowWhite = xmobarColor "#bbbbbb" ""
     green = xmobarColor "#9fe044" ""
+    xmobarbgColor = xmobarColor "#11111b" ""

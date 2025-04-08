@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Change the wallpaper to a random one in the wallpapers directory.
+# Decides between "day" and "night" mode.  For this, all wallpapers are
+# stored in the directories "day" or "night" (loosely based on general
+# colour palette).  New wallpaper has to be different from current
+# wallpaper.  I deeply and sincerely apologise for the two mutable
+# variables.
+#
+
+DIR="$HOME/assets/wallpapers"
+
+
+# Current wallpaper.
+CURRENT=""
+
+while true; do
+
+
+
+  # Get random wallpaper from specified directory.
+  NEW="$(find "$DIR"* -not -type d | shuf -n 1)"
+
+  # New wallpaper has to be distinct from the current one.
+  while [ "$CURRENT" = "$NEW" ]; do
+    NEW="$(find "$DIR"* | shuf -n 1)"
+  done
+
+  # Set new wallpaper.
+  feh --bg-fill --no-fehbg "$NEW"
+
+  # Update current wallpaper.
+  CURRENT=$NEW
+
+  # Interval for wallpaper changes.
+  sleep 20m
+
+done
